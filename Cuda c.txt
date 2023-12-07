@@ -1,0 +1,52 @@
+#include <stdio.h>
+#include <iostream>
+#include <chrono>
+
+// Device function to compute the LCS length
+__device__ int lcs(char *X, char *Y, int m, int n) {
+    if (m == 0 || n == 0)
+        return 0;
+    if (X[m - 1] == Y[n - 1])
+        return lcs(X, Y, m - 1, n - 1) + 1;
+    else
+        return max(lcs(X, Y, m - 1, n), lcs(X, Y, m, n - 1));
+}
+
+__global__ void lcs_kernel(char *X, char *Y, int m, int n, int *result) {
+    *result = lcs(X, Y, m, n);
+}
+
+int main() {
+    char X[] = "ABCBD";
+    char Y[] = "BDCAB";
+
+    int m = sizeof(X) - 1;
+    int n = sizeof(Y) - 1;
+
+    int h_result;
+    int *d_result;
+
+    cudaMalloc((void **)&d_result, sizeof(int));
+
+    dim3 gridSize(32,1,1);
+    dim3 blockSize(1,1,1);
+
+    printf("Number of processes: %d x %d = %d\n", gridSize.x, blockSize.x, gridSize.x * blockSize.x);
+    printf("Number of inputs: %d\n", m + n);
+
+    auto start = std::chrono::high_resolution_clock::now();
+
+    lcs_kernel <<<gridSize, blockSize>>> (X, Y, m, n, d_result);
+    cudaMemcpy(&h_result, d_result, sizeof(int), cudaMemcpyDeviceToHost);
+
+    auto end = std::chrono::high_resolution_clock::now();
+    double time_taken = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+    time_taken *= 1e-9;
+
+    printf("Execution time: %f seconds\n", time_taken);
+
+
+    cudaFree(d_result);
+
+    return 0;
+}

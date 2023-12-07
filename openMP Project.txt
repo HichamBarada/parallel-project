@@ -1,0 +1,38 @@
+#include <stdio.h>
+# include <time.h>
+#include <omp.h>
+
+#define max(a , b) ((a) > (b) ? (a) : (b))
+
+// Device function to compute the LCS length
+int lcs(char *X, char *Y, int m, int n) {
+    if (m == 0 || n == 0)
+        return 0;
+    if (X[m - 1] == Y[n - 1])
+        return lcs(X, Y, m - 1, n - 1) + 1;
+    else
+        return max(lcs(X, Y, m - 1, n), lcs(X, Y, m, n - 1));
+}
+
+int main() {
+
+    char X[] = "ABSALKSCBD";
+    char Y[] = "BDSALKFCAB";
+ 
+    int m = sizeof(X) - 1;
+    int n = sizeof(Y) - 1;
+
+    int h_result;
+
+    printf("Number of threads: %d\n", 4);
+    printf("Number of inputs: %d\n", m + n);
+
+
+    #pragma omp parallel num_threads(4) shared(h_result)
+    {
+        #pragma omp single
+        {
+            h_result = lcs(X, Y, m, n);
+        }
+    }
+}
