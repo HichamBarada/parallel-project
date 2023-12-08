@@ -1,38 +1,59 @@
-#include <stdio.h>
-# include <time.h>
 #include <omp.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
 
-#define max(a , b) ((a) > (b) ? (a) : (b))
-
-// Device function to compute the LCS length
-int lcs(char *X, char *Y, int m, int n) {
-    if (m == 0 || n == 0)
-        return 0;
-    if (X[m - 1] == Y[n - 1])
-        return lcs(X, Y, m - 1, n - 1) + 1;
-    else
-        return max(lcs(X, Y, m - 1, n), lcs(X, Y, m, n - 1));
+int lcs(char *X, char *Y, int m, int n)
+ 
+{
+  int L[m + 1][n + 1];
+  for (int i = 0; i <= m; i++) {
+    for (int j = 0; j <= n; j++) {
+      if (i == 0 || j == 0) {
+        L[i][j] = 0;
+      } else
+ 
+if (X[i - 1] == Y[j - 1]) {
+        L[i][j] = L[i - 1][j - 1] + 1;
+      } else {
+        L[i][j] = max(L[i - 1][j], L[i][j - 1]);
+      }
+    }
+  }
+  return L[m][n];
 }
 
-int main() {
-
-    char X[] = "ABSALKSCBD";
-    char Y[] = "BDSALKFCAB";
+int
  
-    int m = sizeof(X) - 1;
-    int n = sizeof(Y) - 1;
+main()
+ 
+{
+  char X[] = "AGGTABM";
+  char Y[] = "GXTXAYB";
 
-    int h_result;
+  
+int m = strlen(X);
+  int n = strlen(Y);
+  int num_threads = 4;
 
-    printf("Number of threads: %d\n", 4);
-    printf("Number of inputs: %d\n", m + n);
+  clock_t start_time = clock();
+  int lcs_length;
 
-
-    #pragma omp parallel num_threads(4) shared(h_result)
-    {
-        #pragma omp single
-        {
-            h_result = lcs(X, Y, m, n);
-        }
+  #pragma omp parallel num_threads(num_threads)
+  {
+    int thread_id = omp_get_thread_num();
+    if (thread_id == 0) {
+      lcs_length = lcs(X, Y, m, n);
     }
+  }
+
+  clock_t end_time = clock();
+
+  double execution_time = (double)(end_time - start_time) / CLOCKS_PER_SEC;
+
+  printf("LCS length: %d\n", lcs_length);
+  printf("Execution time: %.4f seconds\n", execution_time);
+
+  return 0;
 }
