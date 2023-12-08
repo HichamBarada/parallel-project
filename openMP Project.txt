@@ -24,9 +24,7 @@ if (X[i - 1] == Y[j - 1]) {
   return L[m][n];
 }
 
-int
- 
-main()
+int main()
  
 {
   char X[] = "AGGTABM";
